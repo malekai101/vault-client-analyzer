@@ -20,11 +20,20 @@ class VaultAPIHelper:
         endpoint = f"{self.addr}/sys/namespaces"
         headers = self.build_header(namespace)
         resp = requests.request("LIST", endpoint, headers=headers)
-        resp.raise_for_status()
-        return [
-            {"path": i.get("path"), "id": i.get("id")}
-            for i in resp.json()["data"]["key_info"].values()
-        ]
+        try:
+            resp.raise_for_status()
+            return [
+                {"path": i.get("path"), "id": i.get("id")}
+                for i in resp.json()["data"]["key_info"].values()
+            ]
+        except HTTPError as exp:
+            if exp.response.status_code == 404:
+                # 404 is not child namespaces
+                return []
+            else:
+                raise exp
+        except Exception:
+            raise
 
     def has_child_namespaces(self, namespace="") -> bool:
         endpoint = f"{self.addr}/sys/namespaces"
@@ -34,6 +43,7 @@ class VaultAPIHelper:
             resp.raise_for_status()
         except HTTPError as exp:
             if exp.response.status_code == 404:
+                # 404 is no child namespaces
                 return False
             else:
                 raise exp
