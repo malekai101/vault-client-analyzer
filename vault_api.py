@@ -1,3 +1,4 @@
+import json
 import requests
 from requests.exceptions import HTTPError
 from dataclasses import dataclass
@@ -71,3 +72,14 @@ class VaultAPIHelper:
         else:
             return nslist
         return nslist
+
+    def get_client_detail_over_time(self, start, end) -> list:
+        endpoint = f"{self.addr}/sys/internal/counters/activity/export?start_time={start}&end_time={end}"
+        headers = self.build_header()
+        try:
+            resp = requests.request("GET", endpoint, headers=headers)
+            resp.raise_for_status()
+            json_list = [json.loads(x) for x in resp.text.split("\n") if x != ""]
+            return json_list
+        except:
+            raise
