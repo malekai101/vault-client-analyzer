@@ -1,6 +1,9 @@
 import argparse
 from datetime import datetime
 import os
+from misc_utils import *
+
+import misc_utils
 from vault_api import *
 import time
 
@@ -65,13 +68,27 @@ def main_routine():
     settings = validate_input(args.start, args.end)
     print(settings["start"])
     print(settings["end"])
+    print(misc_utils.convert_to_unix_time(settings["start"]))
     vault = VaultAPIHelper(
         addr=settings["vault_address"], token=settings["vault_token"]
     )
-    nslist = vault.get_child_namespaces()
-    print("the list")
-    print(nslist)
-    print(len(nslist))
+    # nslist = vault.get_client_detail_over_time(
+    # convert_to_unix_time(settings["start"]), convert_to_unix_time(settings["end"])
+    # )
+    # print("the list")
+    # print(nslist)
+    # print(len(nslist))
+    ns = vault.get_child_namespaces()
+    print(ns)
+
+    mounts = vault.get_secret_mounts_by_type(mount_type="kmip")
+    print(mounts)
+
+    scopes = vault.list_kmip_scopes("kmip/")
+    for scope in scopes:
+        print(vault.list_kmip_roles("kmip/", scope))
+
+    print(vault.list_kmip_credentials("kmip/", "finance", role="accounting"))
 
 
 # Press the green button in the gutter to run the script.

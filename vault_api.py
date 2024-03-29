@@ -73,7 +73,7 @@ class VaultAPIHelper:
             return nslist
         return nslist
 
-    def get_client_detail_over_time(self, start, end) -> list:
+    def get_client_detail_over_time(self, start: int, end: int) -> list:
         endpoint = f"{self.addr}/sys/internal/counters/activity/export?start_time={start}&end_time={end}"
         headers = self.build_header()
         try:
@@ -82,4 +82,80 @@ class VaultAPIHelper:
             json_list = [json.loads(x) for x in resp.text.split("\n") if x != ""]
             return json_list
         except:
+            raise
+
+    def lookup_entity_from_id(self, namespace: str, entity_id: str) -> dict:
+        endpoint = f"{self.addr}/identity/lookup/entity"
+        headers = self.build_header(namespace=namespace)
+        try:
+            data = {"id": entity_id}
+            resp = requests.request("POST", endpoint, headers=headers, json=data)
+            resp.raise_for_status()
+        except Exception:
+            raise
+
+    def get_secret_mounts(self, namespace="") -> list:
+        endpoint = f"{self.addr}/sys/mounts"
+        headers = self.build_header(namespace=namespace)
+        try:
+            resp = requests.request("GET", endpoint, headers=headers)
+            resp.raise_for_status()
+            return [
+                {"path": k, "accessor": v.get("accessor"), "type": v.get("type")}
+                for k, v in resp.json().get("data").items()
+            ]
+        except Exception:
+            raise
+
+    def get_secret_mounts_by_type(self, mount_type: str, namespace="") -> list:
+        try:
+            return [
+                x
+                for x in self.get_secret_mounts(namespace=namespace)
+                if str.upper(x["type"]) == mount_type.upper()
+            ]
+        except Exception:
+            raise
+
+    def list_kmip_scopes(self, mount_path: str, namespace="") -> list:
+        endpoint = f"{self.addr}/{mount_path}scope"
+        headers = self.build_header(namespace=namespace)
+        try:
+            resp = requests.request("LIST", endpoint, headers=headers)
+            resp.raise_for_status()
+            return [
+                v for v in resp.json().get("data").get("keys")
+            ]
+        except Exception:
+            raise
+
+    def list_kmip_roles(self, mount_path: str, scope: str, namespace="") -> list:
+        endpoint = f"{self.addr}/{mount_path}scope/{scope}/role"
+        headers = self.build_header(namespace=namespace)
+        try:
+            resp = requests.request("LIST", endpoint, headers=headers)
+            resp.raise_for_status()
+            return [
+                v for v in resp.json().get("data").get("keys")
+            ]
+        except HTTPError as httpexp:
+            if httpexp.response.status_code == 404:
+                return [""]
+        except Exception:
+            raise
+
+    def list_kmip_credentials(self, mount_path: str, scope: str, role: str, namespace="") -> list:
+        endpoint = f"{self.addr}/{mount_path}scope/{scope}/role/{role}/credential"
+        headers = self.build_header(namespace=namespace)
+        try:
+            resp = requests.request("LIST", endpoint, headers=headers)
+            resp.raise_for_status()
+            return [
+                v for v in resp.json().get("data").get("keys")
+            ]
+        except HTTPError as httpexp:
+            print(httpexp)
+            if httpexp.response.status_code == 404:
+                return [""]
+        except Exception:
             raise
