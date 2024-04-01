@@ -123,9 +123,7 @@ class VaultAPIHelper:
         try:
             resp = requests.request("LIST", endpoint, headers=headers)
             resp.raise_for_status()
-            return [
-                v for v in resp.json().get("data").get("keys")
-            ]
+            return [v for v in resp.json().get("data").get("keys")]
         except Exception:
             raise
 
@@ -135,24 +133,22 @@ class VaultAPIHelper:
         try:
             resp = requests.request("LIST", endpoint, headers=headers)
             resp.raise_for_status()
-            return [
-                v for v in resp.json().get("data").get("keys")
-            ]
+            return [v for v in resp.json().get("data").get("keys")]
         except HTTPError as httpexp:
             if httpexp.response.status_code == 404:
                 return [""]
         except Exception:
             raise
 
-    def list_kmip_credentials(self, mount_path: str, scope: str, role: str, namespace="") -> list:
+    def list_kmip_credentials(
+        self, mount_path: str, scope: str, role: str, namespace=""
+    ) -> list:
         endpoint = f"{self.addr}/{mount_path}scope/{scope}/role/{role}/credential"
         headers = self.build_header(namespace=namespace)
         try:
             resp = requests.request("LIST", endpoint, headers=headers)
             resp.raise_for_status()
-            return [
-                v for v in resp.json().get("data").get("keys")
-            ]
+            return [v for v in resp.json().get("data").get("keys")]
         except HTTPError as httpexp:
             print(httpexp)
             if httpexp.response.status_code == 404:

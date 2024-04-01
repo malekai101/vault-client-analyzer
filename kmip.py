@@ -7,10 +7,10 @@ class KMIP_Reporter:
 
     def build_kmip_report(self) -> dict:
         kmip_report = dict()
-        kmip_report['test'] = "done"
+        kmip_report["test"] = "done"
 
         # build namespace list
-        #namespaces = self.vault_client.get_namespaces()
+        # namespaces = self.vault_client.get_namespaces()
 
         # loop through
         # build summary

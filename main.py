@@ -4,12 +4,11 @@ from kmip import *
 
 # Argument parsing
 parser = argparse.ArgumentParser()
-parser.add_argument("--kmip", help="run kmip client analysis",
-                    action="store_true")
+parser.add_argument("--kmip", help="run kmip client analysis", action="store_true")
 args = parser.parse_args()
 
-def validate_input(arg_dict) -> dict:
 
+def validate_input(arg_dict) -> dict:
     # verify  the vault information is populated
     if os.environ.get("VAULT_ADDR") is None or os.environ.get("VAULT_TOKEN") is None:
         raise KeyError(
@@ -19,7 +18,7 @@ def validate_input(arg_dict) -> dict:
     settings = {
         "vault_address": os.environ.get("VAULT_ADDR"),
         "vault_token": os.environ.get("VAULT_TOKEN"),
-        "kmip": args.kmip
+        "kmip": args.kmip,
     }
     return settings
 
