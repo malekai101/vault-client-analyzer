@@ -150,7 +150,6 @@ class VaultAPIHelper:
             resp.raise_for_status()
             return [v for v in resp.json().get("data").get("keys")]
         except HTTPError as httpexp:
-            print(httpexp)
             if httpexp.response.status_code == 404:
                 return [""]
         except Exception:
