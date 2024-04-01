@@ -1,49 +1,14 @@
 import argparse
-from datetime import datetime
 import os
-from misc_utils import *
-
-import misc_utils
-from vault_api import *
-import time
+from kmip import *
 
 # Argument parsing
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "-s",
-    "--start",
-    help="The start date of the analysis as an ISO 8601 date: 2023-01-01",
-)
-parser.add_argument(
-    "-e", "--end", help="The end date of the analysis as an ISO 8601 date: 2023-01-01."
-)
+parser.add_argument("--kmip", help="run kmip client analysis",
+                    action="store_true")
 args = parser.parse_args()
 
-
-def validate_input(start: str, end: str) -> dict:
-    """
-    Validates the input and transforms it to usable start and end times
-    :param start: The start time input
-    :param end: The end time input
-    :return: A tuple with the start and end time for information gathering.
-    """
-    if start is None:
-        start_time = datetime(datetime.now().year, 1, 1)
-    else:
-        try:
-            start_time = datetime.fromisoformat(start)
-        except Exception as exp:
-            start_time = datetime(datetime.now().year, 1, 1)
-
-    if end is None:
-        end_time = datetime(datetime.now().year, 12, 31)
-    else:
-        try:
-            end_time = datetime.fromisoformat(end)
-        except Exception as exp:
-            end_time = datetime(datetime.now().year, 12, 31)
-    # dates = (int(time.mktime(start_time.timetuple())), int(time.mktime(end_time.timetuple())))
-    # dates = (start_time, end_time)
+def validate_input(arg_dict) -> dict:
 
     # verify  the vault information is populated
     if os.environ.get("VAULT_ADDR") is None or os.environ.get("VAULT_TOKEN") is None:
@@ -52,10 +17,9 @@ def validate_input(start: str, end: str) -> dict:
         )
 
     settings = {
-        "start": start_time,
-        "end": end_time,
         "vault_address": os.environ.get("VAULT_ADDR"),
         "vault_token": os.environ.get("VAULT_TOKEN"),
+        "kmip": args.kmip
     }
     return settings
 
@@ -65,30 +29,14 @@ def main_routine():
     The program entry point
     :return: None
     """
-    settings = validate_input(args.start, args.end)
-    print(settings["start"])
-    print(settings["end"])
-    print(misc_utils.convert_to_unix_time(settings["start"]))
-    vault = VaultAPIHelper(
-        addr=settings["vault_address"], token=settings["vault_token"]
-    )
-    # nslist = vault.get_client_detail_over_time(
-    # convert_to_unix_time(settings["start"]), convert_to_unix_time(settings["end"])
-    # )
-    # print("the list")
-    # print(nslist)
-    # print(len(nslist))
-    ns = vault.get_child_namespaces()
-    print(ns)
+    settings = validate_input(args)
+    if not settings["kmip"]:
+        print("KMIP not selected.  No work to do")
+        exit(0)
 
-    mounts = vault.get_secret_mounts_by_type(mount_type="kmip")
-    print(mounts)
-
-    scopes = vault.list_kmip_scopes("kmip/")
-    for scope in scopes:
-        print(vault.list_kmip_roles("kmip/", scope))
-
-    print(vault.list_kmip_credentials("kmip/", "finance", role="accounting"))
+    kmip = KMIP_Reporter(settings["vault_address"], settings["vault_token"])
+    report = kmip.build_kmip_report()
+    print(report)
 
 
 # Press the green button in the gutter to run the script.
