@@ -16,13 +16,28 @@ class KMIP_Reporter:
             if len(kmip_mounts) > 0:
                 # loop through
                 for mount in kmip_mounts:
+                    mount_count = 0
                     scopes = self.vault_client.list_kmip_scopes(
                         mount["path"], namespace
                     )
                     mount["scopes"] = scopes
+                    # find the roles and clients in each scope.
+                    for scope in scopes:
+                        roles = self.vault_client.list_kmip_roles(
+                            mount["path"], scope, namespace
+                        )
+                        for role in roles:
+                            certs = self.vault_client.list_kmip_credentials(
+                                mount["path"], scope, role, namespace
+                            )
+                            clients = len(certs)
+                            mount_count += clients
+                    mount["clients"] = mount_count
+                    total_client_count += mount_count
                 # build summary
                 # return the report
                 kmip_report[namespace] = kmip_mounts
+        kmip_report["total_client_count"] = total_client_count
         return kmip_report
 
     def examine_namespace(self, namespace: str):

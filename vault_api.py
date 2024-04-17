@@ -126,7 +126,7 @@ class VaultAPIHelper:
             return [v for v in resp.json().get("data").get("keys")]
         except HTTPError as httpexp:
             if httpexp.response.status_code == 404:
-                return [""]
+                return []
         except Exception:
             raise
 
@@ -139,7 +139,7 @@ class VaultAPIHelper:
             return [v for v in resp.json().get("data").get("keys")]
         except HTTPError as httpexp:
             if httpexp.response.status_code == 404:
-                return [""]
+                return []
         except Exception:
             raise
 
@@ -154,6 +154,6 @@ class VaultAPIHelper:
             return [v for v in resp.json().get("data").get("keys")]
         except HTTPError as httpexp:
             if httpexp.response.status_code == 404:
-                return [""]
+                return []
         except Exception:
             raise
