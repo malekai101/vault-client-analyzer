@@ -124,6 +124,9 @@ class VaultAPIHelper:
             resp = requests.request("LIST", endpoint, headers=headers)
             resp.raise_for_status()
             return [v for v in resp.json().get("data").get("keys")]
+        except HTTPError as httpexp:
+            if httpexp.response.status_code == 404:
+                return [""]
         except Exception:
             raise
 
