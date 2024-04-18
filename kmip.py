@@ -76,3 +76,58 @@ class KMIP_Reporter:
 
     def examine_namespace(self, namespace: str):
         pass
+
+    def process_roles(self) -> dict:
+        pass
+
+    def process_scopes(self, scope_name: str, mount_path: str, namesspace: str) -> dict:
+        return {"certificates": 3}
+
+    def process_mounts(self, kmip_mounts: list, namespace: str) -> dict:
+        mount_dict = dict()
+        mount_count = 0
+
+        for mount_entry in kmip_mounts:
+            mount_certificates = 0
+            mount_dict[mount_entry["path"]] = mount_entry
+            mount_count += 1
+            # process the scopes
+            mount_dict[mount_entry["path"]]["scopes"] = dict()
+            scopes = self.vault_client.list_kmip_scopes(mount_entry["path"], namespace)
+            for scope in scopes:
+                mount_dict[mount_entry["path"]]["scopes"][scope] = self.process_scopes(
+                    scope_name=scope,
+                    mount_path=mount_entry["path"],
+                    namesspace=namespace,
+                )
+            # pull summary data for the mount
+            mount_dict[mount_entry["path"]]["scope_count"] = len(scopes)
+            for scope in mount_dict[mount_entry["path"]]["scopes"].values():
+                mount_certificates += scope.get("certificates", 0)
+            mount_dict[mount_entry["path"]]["certificates"] = mount_certificates
+        return mount_dict
+
+    def build_kmip_report_new(self) -> dict:
+        kmip_report = dict()
+        kmip_report["namespaces"] = dict()
+        kmip_report["total_kmip_client_count"] = 0
+        kmip_report["total_kmip_mounts"] = 0
+        kmip_report["total_kmip_scopes"] = 0
+        kmip_report["total_kmip_roles"] = 0
+
+        # Pull all of the namespaces on the cluster
+        namespaces = self.vault_client.get_child_namespaces()
+        # Get all of the kmip mounts in all of the namespaces
+        kmip_mounts_list = dict()
+        kmip_report["namespaces"] = dict()
+        for namespace in namespaces.values():
+            kmip_mounts_list = self.vault_client.get_secret_mounts_by_type(
+                "kmip", namespace
+            )
+            if len(kmip_mounts_list) > 0:
+                kmip_report["namespaces"][namespace] = dict()
+                kmip_report["namespaces"][namespace]["mounts"] = self.process_mounts(
+                    kmip_mounts_list, namespace
+                )
+
+        return kmip_report
