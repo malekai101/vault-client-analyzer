@@ -77,11 +77,41 @@ class KMIP_Reporter:
     def examine_namespace(self, namespace: str):
         pass
 
-    def process_roles(self) -> dict:
-        pass
+    def process_roles(
+        self, scope_name: str, role_name: str, mount_path: str, namespace: str
+    ) -> dict:
+        role_dict = dict()
+        role_dict["name"] = role_name
+        role_cert_count = 0
+        credentials = self.vault_client.list_kmip_credentials(
+            mount_path=mount_path, scope=scope_name, role=role_name, namespace=namespace
+        )
+        role_dict["credentials"] = credentials
+        role_dict["certificates"] = len(credentials)
 
-    def process_scopes(self, scope_name: str, mount_path: str, namesspace: str) -> dict:
-        return {"certificates": 3}
+        return role_dict
+
+    def process_scopes(self, scope_name: str, mount_path: str, namespace: str) -> dict:
+        scope_dict = dict()
+        scope_cert_count = 0
+
+        scope_dict["name"] = scope_name
+        scope_dict["roles"] = dict()
+        roles = self.vault_client.list_kmip_roles(
+            mount_path=mount_path, scope=scope_name, namespace=namespace
+        )
+        for role in roles:
+            scope_dict["roles"][role] = self.process_roles(
+                scope_name=scope_name,
+                role_name=role,
+                mount_path=mount_path,
+                namespace=namespace,
+            )
+        scope_dict["role_count"] = len(roles)
+        for role in scope_dict["roles"].values():
+            scope_cert_count += role.get("certificates", 0)
+        scope_dict["certificates"] = scope_cert_count
+        return scope_dict
 
     def process_mounts(self, kmip_mounts: list, namespace: str) -> dict:
         mount_dict = dict()
@@ -98,7 +128,7 @@ class KMIP_Reporter:
                 mount_dict[mount_entry["path"]]["scopes"][scope] = self.process_scopes(
                     scope_name=scope,
                     mount_path=mount_entry["path"],
-                    namesspace=namespace,
+                    namespace=namespace,
                 )
             # pull summary data for the mount
             mount_dict[mount_entry["path"]]["scope_count"] = len(scopes)
@@ -129,5 +159,14 @@ class KMIP_Reporter:
                 kmip_report["namespaces"][namespace]["mounts"] = self.process_mounts(
                     kmip_mounts_list, namespace
                 )
+
+        # build the totals
+        for namespace in kmip_report["namespaces"].values():
+            kmip_report["total_kmip_mounts"] += len(namespace["mounts"])
+            for mount in namespace["mounts"].values():
+                kmip_report["total_kmip_scopes"] += len(mount["scopes"])
+                kmip_report["total_kmip_client_count"] += mount.get("certificates", 0)
+                for scope in mount["scopes"].values():
+                    kmip_report["total_kmip_roles"] += len(scope["roles"])
 
         return kmip_report
