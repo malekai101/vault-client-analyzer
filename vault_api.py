@@ -1,10 +1,11 @@
 import json
 import requests
 from requests.exceptions import HTTPError
-from dataclasses import dataclass
-
 
 class VaultAPIHelper:
+    """
+    The VaultAPIHelper class provides access to the Vault API for a single Vault Cluster
+    """
     def __init__(self, addr, token):
         self.addr = f"{addr}/v1"
         self.token = token
@@ -29,7 +30,7 @@ class VaultAPIHelper:
             ]
         except HTTPError as exp:
             if exp.response.status_code == 404:
-                # 404 is not child namespaces
+                # 404 is no child namespaces
                 return []
             else:
                 raise exp
@@ -91,6 +92,7 @@ class VaultAPIHelper:
             data = {"id": entity_id}
             resp = requests.request("POST", endpoint, headers=headers, json=data)
             resp.raise_for_status()
+            return resp.json()["data"]
         except Exception:
             raise
 
