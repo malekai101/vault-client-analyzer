@@ -33,7 +33,7 @@ def main_routine():
         print("KMIP not selected.  No work to do")
         exit(0)
 
-    kmip = KMIP_Reporter(settings["vault_address"], settings["vault_token"])
+    kmip = KMIPReporter(settings["vault_address"], settings["vault_token"])
     try:
         report = kmip.build_kmip_report()
         print(report)
@@ -41,8 +41,5 @@ def main_routine():
         print(f"An error occurred processing the KMIP report: {e}")
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == "__main__":
     main_routine()
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
