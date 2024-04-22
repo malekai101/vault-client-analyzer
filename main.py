@@ -34,8 +34,11 @@ def main_routine():
         exit(0)
 
     kmip = KMIP_Reporter(settings["vault_address"], settings["vault_token"])
-    report = kmip.build_kmip_report()
-    print(report)
+    try:
+        report = kmip.build_kmip_report()
+        print(report)
+    except Exception as e:
+        print(f"An error occurred processing the KMIP report: {e}")
 
 
 # Press the green button in the gutter to run the script.
