@@ -1,6 +1,7 @@
 import argparse
 import os
 from kmip import *
+import json
 
 # Argument parsing
 parser = argparse.ArgumentParser()
@@ -36,7 +37,7 @@ def main_routine():
     kmip = KMIPReporter(settings["vault_address"], settings["vault_token"])
     try:
         report = kmip.build_kmip_report()
-        print(report)
+        print(json.dumps(report))
     except Exception as e:
         print(f"An error occurred processing the KMIP report: {e}")
 

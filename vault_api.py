@@ -2,10 +2,12 @@ import json
 import requests
 from requests.exceptions import HTTPError
 
+
 class VaultAPIHelper:
     """
     The VaultAPIHelper class provides access to the Vault API for a single Vault Cluster
     """
+
     def __init__(self, addr, token):
         self.addr = f"{addr}/v1"
         self.token = token
